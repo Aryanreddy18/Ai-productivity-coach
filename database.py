@@ -1,0 +1,235 @@
+import sqlite3
+import hashlib
+import os
+import json
+
+DB_NAME = "productivity_coach.db"
+
+def get_connection():
+    conn = sqlite3.connect(DB_NAME, check_same_thread=False)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA foreign_keys=ON;")
+    return conn
+
+def hash_password(password, salt=None):
+    if salt is None:
+        salt = os.urandom(16).hex()
+    key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 100000)
+    return f"{salt}${key.hex()}"
+
+def verify_password(stored_password, provided_password):
+    try:
+        salt, stored_hash = stored_password.split('$')
+        key = hashlib.pbkdf2_hmac('sha256', provided_password.encode('utf-8'), salt.encode('utf-8'), 100000)
+        return key.hex() == stored_hash
+    except Exception:
+        return False
+
+def init_db():
+    conn = get_connection()
+    c = conn.cursor()
+    
+    # 1. Base Users Table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # AUTO-MIGRATION: Ensure newly added columns exist on existing databases
+    c.execute("PRAGMA table_info(users);")
+    existing_columns = [col[1] for col in c.fetchall()]
+    
+    missing_columns = {
+        "email": "TEXT DEFAULT ''",
+        "timezone": "TEXT DEFAULT 'UTC'",
+        "sports_preference": "TEXT DEFAULT 'Gym & Badminton'",
+        "weekly_goal_hours": "INTEGER DEFAULT 20"
+    }
+    
+    for col_name, col_def in missing_columns.items():
+        if col_name not in existing_columns:
+            c.execute(f"ALTER TABLE users ADD COLUMN {col_name} {col_def};")
+    
+    # 2. Tasks Table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            category TEXT NOT NULL,
+            priority TEXT NOT NULL,
+            status TEXT DEFAULT 'Pending',
+            time_spent_mins INTEGER DEFAULT 0,
+            created_at DATE DEFAULT CURRENT_DATE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ''')
+
+    # 3. Habits Table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS habits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            sun INTEGER DEFAULT 0,
+            mon INTEGER DEFAULT 0,
+            tue INTEGER DEFAULT 1,
+            wed INTEGER DEFAULT 1,
+            thu INTEGER DEFAULT 0,
+            fri INTEGER DEFAULT 1,
+            sat INTEGER DEFAULT 0,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ''')
+    
+    # 4. Activity Logs
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS activity_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            activity_type TEXT NOT NULL,
+            description TEXT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ''')
+
+    # Performance Indexing
+    c.execute("CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id);")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);")
+    
+    conn.commit()
+    conn.close()
+
+def register_user(username, password, email=""):
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        hashed_p = hash_password(password)
+        c.execute("INSERT INTO users (username, password, email) VALUES (?, ?, ?)", (username, hashed_p, email))
+        user_id = c.lastrowid
+        
+        default_habits = [
+            (user_id, "Heavy Gym Powerbuilding 🏋️‍♂️", 0, 0, 1, 1, 0, 1, 0),
+            (user_id, "Badminton Match Agility 🏸", 0, 0, 1, 1, 1, 1, 1),
+            (user_id, "Sprinting High-Intensity Cardio 🏃‍♂️", 0, 0, 1, 0, 1, 1, 1)
+        ]
+        c.executemany("INSERT INTO habits (user_id, name, sun, mon, tue, wed, thu, fri, sat) VALUES (?,?,?,?,?,?,?,?,?)", default_habits)
+        
+        default_tasks = [
+            (user_id, "Gym Heavy Bench & Squats", "Health", "High 🔥", "Completed", 60),
+            (user_id, "Badminton Match Doubles", "Health", "High 🔥", "Pending", 45),
+            (user_id, "Deep Work Software Sprint", "Deep work", "High 🔥", "Completed", 90)
+        ]
+        c.executemany("INSERT INTO tasks (user_id, title, category, priority, status, time_spent_mins) VALUES (?,?,?,?,?,?)", default_tasks)
+
+        c.execute("INSERT INTO activity_logs (user_id, activity_type, description) VALUES (?, ?, ?)", 
+                  (user_id, "AUTH", "Account created successfully"))
+
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+def authenticate_user(username, password):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT id, password FROM users WHERE username = ?", (username,))
+    row = c.fetchone()
+    conn.close()
+    if row and verify_password(row[1], password):
+        return row[0]
+    return None
+
+def get_user_profile(user_id):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT username, email, timezone, sports_preference, weekly_goal_hours, created_at FROM users WHERE id = ?", (user_id,))
+    row = c.fetchone()
+    conn.close()
+    return row
+
+def update_user_profile(user_id, email, timezone, sports_pref, goal_hours):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("""
+        UPDATE users 
+        SET email = ?, timezone = ?, sports_preference = ?, weekly_goal_hours = ? 
+        WHERE id = ?
+    """, (email, timezone, sports_pref, goal_hours, user_id))
+    conn.commit()
+    conn.close()
+
+def add_task(user_id, title, category, priority, time_spent=0):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute(
+        "INSERT INTO tasks (user_id, title, category, priority, time_spent_mins) VALUES (?, ?, ?, ?, ?)",
+        (user_id, title, category, priority, time_spent)
+    )
+    conn.commit()
+    conn.close()
+
+def get_tasks(user_id):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT id, title, category, priority, status, time_spent_mins, created_at FROM tasks WHERE user_id = ?", (user_id,))
+    rows = c.fetchall()
+    conn.close()
+    return rows
+
+def get_habits(user_id):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT id, name, sun, mon, tue, wed, thu, fri, sat FROM habits WHERE user_id = ?", (user_id,))
+    rows = c.fetchall()
+    conn.close()
+    return rows
+
+def add_habit(user_id, habit_name):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("INSERT INTO habits (user_id, name) VALUES (?, ?)", (user_id, habit_name))
+    conn.commit()
+    conn.close()
+
+def toggle_habit_day(habit_id, day_col, current_val):
+    new_val = 0 if current_val == 1 else 1
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute(f"UPDATE habits SET {day_col} = ? WHERE id = ?", (new_val, habit_id))
+    conn.commit()
+    conn.close()
+
+def update_task_status(task_id, status):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("UPDATE tasks SET status = ? WHERE id = ?", (status, task_id))
+    conn.commit()
+    conn.close()
+
+def delete_task(task_id):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+    conn.commit()
+    conn.close()
+
+def export_user_data(user_id):
+    tasks = get_tasks(user_id)
+    habits = get_habits(user_id)
+    profile = get_user_profile(user_id)
+    
+    return json.dumps({
+        "profile": profile,
+        "tasks": tasks,
+        "habits": habits
+    }, indent=4)
+
+init_db()
