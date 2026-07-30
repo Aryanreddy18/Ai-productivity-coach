@@ -88,6 +88,21 @@ def apply_neon_theme():
         box-shadow: 0 10px 25px -5px rgba(234, 179, 8, 0.3);
     }
 
+    /* 3D Interactive Habit Cell Buttons */
+    div[data-testid="stColumn"] > div > div > div > button.habit-btn-done {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid #34d399 !important;
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.5), inset 0 2px 4px rgba(255,255,255,0.3) !important;
+        transform: translateY(-2px);
+    }
+
+    div[data-testid="stColumn"] > div > div > div > button.habit-btn-off {
+        background: rgba(15, 23, 42, 0.6) !important;
+        color: #64748b !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
     /* Expandable Sport Cards */
     .expandable-sport-card {
         background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.6));
@@ -97,7 +112,6 @@ def apply_neon_theme():
         transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         position: relative;
         overflow: hidden;
-        cursor: pointer;
     }
 
     .expandable-sport-card:hover {

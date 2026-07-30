@@ -32,6 +32,24 @@ def generate_rule_insights(df):
             
     return "🏆 Peak Flow State unlocked! Physical and mental productivity metrics are optimized."
 
+def calculate_ai_recovery_metrics(df):
+    """Calculates daily Physical/Mental Strain vs Recovery Needs."""
+    if df.empty:
+        return 45, 88, "Optimal (2.5L Water + 30g Protein)"
+    
+    completed = df[df['Status'] == 'Completed'] if 'Status' in df.columns else df
+    total_time = completed['TimeSpent'].sum() if 'TimeSpent' in completed.columns else 90
+    
+    strain = min(100, int((total_time / 180) * 100))
+    recovery = max(20, 100 - int(strain * 0.6))
+    
+    if strain > 70:
+        advice = "High Strain! 3.5L Water + 400mg Magnesium & 40g Protein Required"
+    else:
+        advice = "Moderate Strain! Standard Hydration & 20m Alpha Wave Protocol"
+        
+    return strain, recovery, advice
+
 def get_ai_coach_response(prompt, user_tasks_summary):
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key or api_key == "your_openai_api_key_here":

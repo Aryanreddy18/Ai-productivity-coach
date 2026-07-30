@@ -7,10 +7,10 @@ from streamlit_mic_recorder import speech_to_text
 from database import (
     register_user, authenticate_user, add_task, get_tasks,
     update_task_status, delete_task, get_habits, add_habit, toggle_habit_day,
-    get_user_profile, update_user_profile, export_user_data, add_user_xp
+    get_user_profile, update_user_profile, export_user_data, add_user_xp, get_boss_info
 )
 from styles import apply_neon_theme, render_score_ring_hd
-from ai_engine import calculate_productivity_score, generate_rule_insights, get_ai_coach_response
+from ai_engine import calculate_productivity_score, generate_rule_insights, get_ai_coach_response, calculate_ai_recovery_metrics
 
 st.set_page_config(page_title="Elevate - The AI Productivity Coach", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
 apply_neon_theme()
@@ -92,11 +92,12 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# --- FETCH USER PROFILE DATA ---
+# --- FETCH USER PROFILE & BOSS DATA ---
 profile_data = get_user_profile(st.session_state.user_id)
 user_xp = profile_data[6] if profile_data and len(profile_data) > 6 else 350
 user_level = profile_data[7] if profile_data and len(profile_data) > 7 else 3
 freeze_tokens = profile_data[8] if profile_data and len(profile_data) > 8 else 2
+boss_name, boss_max_hp, boss_cur_hp = get_boss_info()
 
 # --- EXPANDED SIDEBAR NAVIGATION ---
 with st.sidebar:
@@ -155,10 +156,30 @@ raw_tasks = get_tasks(st.session_state.user_id)
 df_tasks = pd.DataFrame(raw_tasks, columns=["ID", "Title", "Category", "Priority", "Status", "TimeSpent", "CreatedAt"])
 habits = get_habits(st.session_state.user_id)
 score, badge = calculate_productivity_score(df_tasks)
+strain, recovery, rec_advice = calculate_ai_recovery_metrics(df_tasks)
 
 # --- VIEW 1: DASHBOARD ---
 if menu == "Dashboard":
     
+    # GLOBAL BOSS RAID BANNER
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(168, 85, 247, 0.2)); border:1px solid #ef4444; border-radius:18px; padding:16px 24px; margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <span style="font-size:18px; font-weight:900; color:#ef4444;">⚔️ GLOBAL COMMUNITY RAID BOSS</span>
+                <div style="font-size:22px; font-weight:900; color:#ffffff;">{boss_name}</div>
+            </div>
+            <div style="text-align:right;">
+                <span style="font-size:20px; font-weight:900; color:#ffffff;">{boss_cur_hp} / {boss_max_hp} HP</span>
+                <div style="font-size:12px; color:#cbd5e1;">Completing tasks attacks the boss!</div>
+            </div>
+        </div>
+        <div class="xp-bar-bg" style="margin-top:10px; background:rgba(0,0,0,0.5);">
+            <div style="background: linear-gradient(90deg, #ef4444, #f97316); height:100%; width: {int((boss_cur_hp/boss_max_hp)*100)}%; border-radius:12px;"></div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     col_main, col_side = st.columns([2.2, 1])
 
     with col_main:
@@ -189,6 +210,26 @@ if menu == "Dashboard":
             s2.metric("🏆 Best Streak", "7 Days")
 
         st.markdown("</div>", unsafe_allow_html=True)
+
+        # AI STRAIN VS RECOVERY CARD
+        st.markdown(f"""
+        <div class="hd-card" style="border-left: 6px solid #38bdf8;">
+            <div style="font-size:18px; font-weight:900; color:#ffffff; margin-bottom:12px;">🧬 Physical Strain vs. Cognitive Recovery Engine</div>
+            <div style="display:flex; justify-content:space-around; text-align:center; margin-bottom:12px;">
+                <div>
+                    <div style="font-size:12px; color:#94a3b8; font-weight:800;">DAILY STRAIN</div>
+                    <div style="font-size:28px; font-weight:900; color:#ef4444;">{strain}%</div>
+                </div>
+                <div>
+                    <div style="font-size:12px; color:#94a3b8; font-weight:800;">RECOVERY STATE</div>
+                    <div style="font-size:28px; font-weight:900; color:#10b981;">{recovery}%</div>
+                </div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:12px; font-size:13px; color:#38bdf8; font-weight:700;">
+                💡 AI Bio-Advice: {rec_advice}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     with col_side:
         st.markdown("""
@@ -506,9 +547,10 @@ elif menu == "Tasks":
                 st.rerun()
             st.divider()
 
-# --- VIEW 3: HABIT MATRIX ---
+# --- VIEW 3: HABIT MATRIX (HYPER-INTERACTIVE 3D) ---
 elif menu == "Habit Matrix":
-    st.markdown("<h2 style='color:#ffffff; font-weight:900;'>📅 Interactive 3D Habit Matrix</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#ffffff; font-weight:900;'>📅 Hyper-Interactive 3D Habit Matrix</h2>", unsafe_allow_html=True)
+    st.caption("Press any 3D day block below to toggle your state and trigger XP/level gain.")
     
     with st.form("habit_3d_form", clear_on_submit=True):
         hn = st.text_input("New Habit Objective Title")
@@ -516,12 +558,16 @@ elif menu == "Habit Matrix":
             add_habit(st.session_state.user_id, hn)
             st.rerun()
 
-    st.markdown("---")
+    st.markdown("<br>", unsafe_allow_html=True)
     day_keys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]
     day_labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     
     for h in habits:
-        st.markdown(f"### {h[1]}")
+        st.markdown(f"""
+        <div style="background: rgba(15, 23, 42, 0.7); border:1px solid rgba(255,255,255,0.08); border-radius:18px; padding:18px; margin-bottom:16px;">
+            <div style="font-size:18px; font-weight:900; color:#ffffff; margin-bottom:12px;">{h[1]}</div>
+        """, unsafe_allow_html=True)
+        
         h_cols = st.columns(7)
         for d_idx in range(7):
             val = h[d_idx + 2]
@@ -531,26 +577,31 @@ elif menu == "Habit Matrix":
                 if not val:
                     add_user_xp(st.session_state.user_id, 15)
                 st.rerun()
-        st.divider()
+        st.markdown("</div>", unsafe_allow_html=True)
 
-# --- VIEW 4: ANALYTICS ---
+# --- VIEW 4: ANALYTICS (WITH GHOST PACE RACE CHART) ---
 elif menu == "Analytics":
     st.markdown("<h2 style='color:#ffffff; font-weight:900;'>📊 Live Performance Analytics</h2>", unsafe_allow_html=True)
     
-    st.markdown("<div class='hd-card'><div style='font-size:20px; font-weight:900; color:#10b981; margin-bottom:12px;'>📈 Productivity Momentum Trend (Stock Chart View)</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hd-card'><div style='font-size:20px; font-weight:900; color:#10b981; margin-bottom:12px;'>📈 Live Ghost Pace Race Chart (You vs. Best Self)</div>", unsafe_allow_html=True)
     
     trend_data = pd.DataFrame({
         "Session": ["Mon AM", "Mon PM", "Tue AM", "Tue PM", "Wed AM", "Wed PM", "Thu AM"],
-        "Focus_Score": [42, 65, 58, 82, 75, 91, 88]
+        "Your_Focus": [42, 65, 58, 82, 75, 91, 88],
+        "Ghost_Best": [50, 60, 70, 75, 80, 85, 90]
     })
     
     fig_stock = go.Figure()
     fig_stock.add_trace(go.Scatter(
-        x=trend_data["Session"], y=trend_data["Focus_Score"],
-        mode='lines+markers',
+        x=trend_data["Session"], y=trend_data["Your_Focus"],
+        mode='lines+markers', name="Live Current Pace",
         line=dict(color='#10b981', width=4),
-        fill='tozeroy',
-        fillcolor='rgba(16, 185, 129, 0.18)'
+        fill='tozeroy', fillcolor='rgba(16, 185, 129, 0.15)'
+    ))
+    fig_stock.add_trace(go.Scatter(
+        x=trend_data["Session"], y=trend_data["Ghost_Best"],
+        mode='lines', name="Ghost Best Record 👻",
+        line=dict(color='#a855f7', width=2, dash='dash')
     ))
     fig_stock.update_layout(
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",

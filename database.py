@@ -89,17 +89,19 @@ def init_db():
         )
     ''')
 
-    # 4. Activity Logs
+    # 4. Boss Raid Global Table
     c.execute('''
-        CREATE TABLE IF NOT EXISTS activity_logs (
+        CREATE TABLE IF NOT EXISTS boss_raid (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            activity_type TEXT NOT NULL,
-            description TEXT,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            boss_name TEXT DEFAULT 'Procrastination Behemoth',
+            max_hp INTEGER DEFAULT 10000,
+            current_hp INTEGER DEFAULT 6420
         )
     ''')
+    
+    c.execute("SELECT COUNT(*) FROM boss_raid")
+    if c.fetchone()[0] == 0:
+        c.execute("INSERT INTO boss_raid (boss_name, max_hp, current_hp) VALUES ('Procrastination Behemoth', 10000, 6420)")
 
     c.execute("CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id);")
     c.execute("CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);")
@@ -163,8 +165,19 @@ def add_user_xp(user_id, xp_gained):
         new_xp = row[0] + xp_gained
         new_level = (new_xp // 200) + 1
         c.execute("UPDATE users SET xp = ?, level = ? WHERE id = ?", (new_xp, new_level, user_id))
+        
+        # Attack the global boss!
+        c.execute("UPDATE boss_raid SET current_hp = MAX(0, current_hp - ?) WHERE id = 1", (xp_gained * 2,))
         conn.commit()
     conn.close()
+
+def get_boss_info():
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT boss_name, max_hp, current_hp FROM boss_raid WHERE id = 1")
+    row = c.fetchone()
+    conn.close()
+    return row if row else ("Procrastination Behemoth", 10000, 6420)
 
 def update_user_profile(user_id, email, timezone, sports_pref, goal_hours):
     conn = get_connection()
