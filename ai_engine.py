@@ -1,6 +1,8 @@
 import os
+import json
 import pandas as pd
 from openai import OpenAI
+from database import add_task
 
 def calculate_productivity_score(df):
     if df.empty:
@@ -76,21 +78,86 @@ def generate_executive_weekly_report(username, df):
     """
     return report
 
-def get_ai_coach_response(prompt, user_tasks_summary):
+def get_ai_coach_response_v2(messages_history, live_context, persona_mode, user_id):
+    """
+    Upgraded AI Coach with Short-Term Memory, System Context Grounding,
+    Persona Adaptation, and OpenAI Function Calling for Task Creation.
+    """
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key or api_key == "your_openai_api_key_here":
-        return "🤖 [Elevate AI 3D]: Maintain athletic hydration, lock in your primary sprint (Gym, Badminton, or Deep Work), and work in 45-minute focus intervals!"
-    
+        # Fallback offline conversational response
+        last_usr_msg = messages_history[-1]["content"].lower() if messages_history else ""
+        if "badminton" in last_usr_msg or "gym" in last_usr_msg:
+            add_task(user_id, f"AI Scheduled: {messages_history[-1]['content']}", "Health", "High 🔥", 45)
+            return "🤖 [Elevate AI Coach]: I have analyzed your request and automatically scheduled this workout in your task backlog! Stay hydrated and lock in!"
+        return f"🤖 [Elevate AI ({persona_mode})]: Memory & Context Loaded! User Level: {live_context.get('level', 3)}. Maintain athletic hydration and complete your pending sprints!"
+
     try:
         client = OpenAI(api_key=api_key)
+        
+        # 1. Build Persona Prompt
+        persona_instructions = {
+            "Tough Love / Military 🥊": "You are a tough, no-nonsense military performance coach. Direct, aggressive, high accountability.",
+            "Scientific Bio-Hacker 🔬": "You are a bio-hacking scientist. Focus on HRV, circadian rhythms, glucose control, and VO2 Max metrics.",
+            "Empathetic Mentor 🌿": "You are a supportive, calm mentor. Encouraging, mindful, focusing on sustainable momentum."
+        }
+        
+        system_content = f"""
+        {persona_instructions.get(persona_mode, "You are an elite AI Coach.")}
+        
+        LIVE USER CONTEXT:
+        - Username: {live_context.get('username')}
+        - Level: {live_context.get('level')} | XP: {live_context.get('xp')}
+        - Pending Tasks: {live_context.get('pending_count')}
+        - Strain: {live_context.get('strain')}% | Recovery: {live_context.get('recovery')}%
+        
+        If the user asks you to schedule, add, or create a task/workout, use the 'create_task_tool' function call.
+        """
+        
+        # 2. Format Messages with System Grounding
+        formatted_messages = [{"role": "system", "content": system_content}] + messages_history
+
+        # 3. Define Function Call Tool
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "create_task_tool",
+                    "description": "Create a new task or workout in the user's database backlog.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "title": {"type": "string", "description": "Title of the task"},
+                            "category": {"type": "string", "enum": ["Deep work", "Shallow work", "Health", "Personal"]},
+                            "priority": {"type": "string", "enum": ["High 🔥", "Medium ⚡", "Low 🌱"]},
+                            "time_mins": {"type": "integer", "description": "Duration in minutes"}
+                        },
+                        "required": ["title", "category", "priority", "time_mins"]
+                    }
+                }
+            }
+        ]
+
+        # 4. API Call with Tools
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": f"You are Elevate, an elite commercial AI Productivity Coach. Professional, highly motivating tone. Summary: {user_tasks_summary}"},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=250
+            messages=formatted_messages,
+            tools=tools,
+            tool_choice="auto",
+            max_tokens=300
         )
-        return response.choices[0].message.content
+        
+        msg = response.choices[0].message
+        
+        # Check if Tool was Triggered
+        if msg.tool_calls:
+            for tool_call in msg.tool_calls:
+                if tool_call.function.name == "create_task_tool":
+                    args = json.loads(tool_call.function.arguments)
+                    add_task(user_id, args.get("title"), args.get("category"), args.get("priority"), args.get("time_mins", 45))
+                    return f"✅ **[AI Coach Tool Executed]**: Created task **'{args.get('title')}'** ({args.get('time_mins')} mins) in your backlog!"
+        
+        return msg.content
+
     except Exception as e:
         return f"AI Error: {str(e)}"

@@ -11,7 +11,7 @@ from database import (
 )
 from styles import apply_neon_theme, render_score_ring_hd
 from ai_engine import (
-    calculate_productivity_score, generate_rule_insights, get_ai_coach_response, 
+    calculate_productivity_score, generate_rule_insights, get_ai_coach_response_v2, 
     calculate_ai_recovery_metrics, generate_executive_weekly_report
 )
 
@@ -724,42 +724,67 @@ elif menu == "Analytics":
         st.plotly_chart(fig_vol, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-# --- VIEW 5: AI COACH ---
+# --- VIEW 5: UPGRADED AI COACH CHATBOT (FULL CONVERSATIONAL ENGINE) ---
 elif menu == "AI Coach":
     st.markdown("""
-    <div style="display:flex; align-items:center; gap:20px; margin-bottom:24px;">
-        <div style="font-size:36px; background:#00f3ff; width:60px; height:60px; border-radius:18px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px #00f3ff;">🤖</div>
-        <div>
-            <div style="font-size:28px; font-weight:900; color:#ffffff;">AI Productivity Coach (Voice Engine)</div>
-            <div style="color:#00f3ff; font-size:14px; font-weight:800; letter-spacing:0.5px;">● ACTIVE & READY FOR VOICE HYPE SPEECHES</div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+        <div style="display:flex; align-items:center; gap:16px;">
+            <div style="font-size:36px; background:#00f3ff; width:60px; height:60px; border-radius:18px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px #00f3ff;">🤖</div>
+            <div>
+                <div style="font-size:26px; font-weight:900; color:#ffffff;">AI Productivity Coach (Memory & Tool Engine)</div>
+                <div style="color:#00f3ff; font-size:12px; font-weight:800; letter-spacing:0.5px;">● ACTIVE & CONTEXT-GROUNDED</div>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    if st.button("🔊 Get Pre-Workout AI Spoken Hype Audio"):
-        st.info("🎙️ AI Spoken Audio Coach: 'Listen up! Today you lock in your Heavy Gym Compound Lifts. Stay hydrated, keep your focus state locked, and let's crush Level 4!'")
-        st.components.v1.html("""
-        <audio autoplay controls style="width: 100%; filter: invert(100%);">
-            <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" type="audio/mpeg">
-        </audio>
-        """, height=50)
+    c_persona, c_voice = st.columns([1.5, 1])
+    with c_persona:
+        persona = st.selectbox("Select Coach Persona Matrix", ["Tough Love / Military 🥊", "Scientific Bio-Hacker 🔬", "Empathetic Mentor 🌿"])
+    with c_voice:
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🔊 Play Spoken Pep-Talk Audio", use_container_width=True):
+            st.info("🎙️ AI Coach Speech: 'Lock in today! Complete your Gym & Badminton tasks to level up!'")
+            st.components.v1.html("""
+            <audio autoplay controls style="width: 100%; filter: invert(100%);">
+                <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" type="audio/mpeg">
+            </audio>
+            """, height=45)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    
+
+    # Initialize Session Message History
     if "messages" not in st.session_state:
         st.session_state.messages = [
-            {"role": "assistant", "content": f"Hey {st.session_state.username}! I am your AI Coach. What primary focus objective are we conquering today?"}
+            {"role": "assistant", "content": f"Hey {st.session_state.username}! I am your AI Coach. I have loaded your live level ({user_level}), XP ({user_xp}), and task backlog. Ask me anything or tell me to schedule a task!"}
         ]
 
+    # Display History
     for msg in st.session_state.messages:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    if prompt := st.chat_input("Ask your AI Coach..."):
+    # Handle User Input
+    if prompt := st.chat_input("Ask your AI Coach (e.g., 'Schedule a 45 min Badminton match')..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.chat_message("user").write(prompt)
         
-        summary = f"Total tasks in queue: {len(df_tasks)}"
-        response = get_ai_coach_response(prompt, summary)
+        # Build Live Grounding Context
+        pending_count = len(df_tasks[df_tasks['Status'] == 'Pending']) if not df_tasks.empty and 'Status' in df_tasks.columns else 0
+        live_context = {
+            "username": st.session_state.username,
+            "level": user_level,
+            "xp": user_xp,
+            "pending_count": pending_count,
+            "strain": strain,
+            "recovery": recovery
+        }
+        
+        # Call Upgraded AI Engine
+        response = get_ai_coach_response_v2(st.session_state.messages, live_context, persona, st.session_state.user_id)
         
         st.session_state.messages.append({"role": "assistant", "content": response})
         st.chat_message("assistant").write(response)
+        
+        # Rerun if tool modified the database
+        if "Tool Executed" in response or "scheduled" in response.lower():
+            st.rerun()
