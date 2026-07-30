@@ -80,19 +80,13 @@ def generate_executive_weekly_report(username, df):
     return report
 
 def _offline_dynamic_response(user_text, live_context, persona_mode, user_id):
-    """
-    Dynamic intent-parsing engine that understands user input and responds 
-    contextually with specific guidance or auto-task creation.
-    """
     text = user_text.lower()
     uname = live_context.get('username', 'Athlete')
     level = live_context.get('level', 1)
     xp = live_context.get('xp', 0)
     pending = live_context.get('pending_count', 0)
     
-    # 1. Task / Workout Scheduling Intent
     if any(k in text for k in ["schedule", "add", "create", "plan", "book", "set a"]):
-        # Extract duration if present
         dur_match = re.search(r'(\d+)\s*(min|mins|minute|minutes|hr|hour)', text)
         mins = 45
         if dur_match:
@@ -115,39 +109,27 @@ def _offline_dynamic_response(user_text, live_context, persona_mode, user_id):
             add_task(user_id, f"Sprint Objective: {user_text[:30]}", "Deep work", "High 🔥", mins)
             return f"⚡ **[AI Coach - {persona_mode}]**: I have created the sprint task **'{user_text}'** ({mins} mins) in your task command center!"
 
-    # 2. Gym / Strength Query
     if any(k in text for k in ["gym", "workout", "muscle", "bench", "squat", "weight"]):
-        return f"🏋️‍♂️ **[AI Coach]**: For peak gym performance at Level {level}, prioritize heavy compound lifts (Squat, Bench, Deadlift) in 45-minute focus blocks. Take 2-minute rest intervals between sets to optimize neural recovery."
+        return f"🏋️‍♂️ **[AI Coach]**: For peak gym performance at Level {level}, prioritize heavy compound lifts (Squat, Bench, Deadlift) in 45-minute focus blocks. Take 2-minute rest intervals between sets."
 
-    # 3. Badminton / Agility Query
     if any(k in text for k in ["badminton", "racket", "smash", "shuttle", "court"]):
-        return f"🏸 **[AI Coach]**: Badminton demands rapid lateral footwork and high heart-rate variability. Ensure a 10-minute dynamic warm-up before hitting the court to protect wrist and ankle joints!"
+        return f"🏸 **[AI Coach]**: Badminton demands rapid lateral footwork and high heart-rate variability. Ensure a 10-minute dynamic warm-up before hitting the court!"
 
-    # 4. Sprinting / Cardio Query
     if any(k in text for k in ["sprint", "running", "cardio", "stamina", "speed"]):
         return f"🏃‍♂️ **[AI Coach]**: High-Intensity Interval Sprinting (HIIT) boosts your VO2 Max faster than steady cardio. Try 10x 100m explosive sprints with 60-second walk recoveries."
 
-    # 5. Stress / Recovery / Fatigue Query
     if any(k in text for k in ["tired", "fatigue", "exhausted", "sore", "rest", "sleep", "recovery"]):
-        return f"🧘‍♂️ **[AI Coach]**: High strain detected in your bio-feedback! Take a 15-minute alpha-wave soundscape break in the audio center, consume 30g protein + electrolytes, and defer low-priority tasks."
+        return f"🧘‍♂️ **[AI Coach]**: High strain detected in your bio-feedback! Take a 15-minute alpha-wave soundscape break in the audio center, consume 30g protein + electrolytes."
 
-    # 6. Level / XP / Gamification Query
     if any(k in text for k in ["level", "xp", "rank", "leaderboard", "boss", "points"]):
         return f"🎮 **[AI Coach]**: You are currently **Level {level}** with **{xp} XP**. Completing tasks earns +20-30 XP and attacks the Global Community Boss!"
 
-    # 7. Greetings & General Conversational Input
     if any(k in text for k in ["hi", "hello", "hey", "sup", "morning", "evening"]):
         return f"⚡ **[AI Coach]**: Hey {uname}! You currently have **{pending} pending tasks** in your backlog. What are we crushing today—Gym, Badminton, or a Deep Work sprint?"
 
-    # Default Contextual Conversational Fallback
     return f"🤖 **[AI Coach - {persona_mode}]**: I analyzed: *'{user_text}'*. To keep your Flow Index optimal, lock in a 45-minute sprint or ask me to schedule a workout for you!"
 
-
 def get_ai_coach_response_v2(messages_history, live_context, persona_mode, user_id):
-    """
-    Context-grounded conversational engine. Uses OpenAI GPT-4o-mini with tool calls 
-    when available, or the dynamic offline intent engine when no API key is provided.
-    """
     api_key = os.getenv("OPENAI_API_KEY")
     user_prompt = messages_history[-1]["content"] if messages_history else ""
 
@@ -158,7 +140,7 @@ def get_ai_coach_response_v2(messages_history, live_context, persona_mode, user_
         client = OpenAI(api_key=api_key)
         
         persona_instructions = {
-            "Tough Love / Military 🥊": "You are a tough, no-nonsense military performance coach. Direct, aggressive, high accountability. Never give generic boilerplate replies.",
+            "Tough Love / Military 🥊": "You are a tough, no-nonsense military performance coach. Direct, aggressive, high accountability.",
             "Scientific Bio-Hacker 🔬": "You are a bio-hacking scientist. Focus on HRV, circadian rhythms, glucose control, and VO2 Max metrics.",
             "Empathetic Mentor 🌿": "You are a supportive, calm mentor. Encouraging, mindful, focusing on sustainable momentum."
         }
