@@ -39,7 +39,7 @@ def init_db():
         )
     ''')
     
-    # AUTO-MIGRATION: Ensure Gamification & RPG columns exist
+    # AUTO-MIGRATION: Ensure Gamification, RPG, Subdomain & Subscription columns exist
     c.execute("PRAGMA table_info(users);")
     existing_columns = [col[1] for col in c.fetchall()]
     
@@ -50,7 +50,9 @@ def init_db():
         "weekly_goal_hours": "INTEGER DEFAULT 20",
         "xp": "INTEGER DEFAULT 350",
         "level": "INTEGER DEFAULT 3",
-        "freeze_tokens": "INTEGER DEFAULT 2"
+        "freeze_tokens": "INTEGER DEFAULT 2",
+        "subdomain": "TEXT DEFAULT 'athlete'",
+        "tier": "TEXT DEFAULT 'Pro Enterprise Tier'"
     }
     
     for col_name, col_def in missing_columns.items():
@@ -151,10 +153,18 @@ def authenticate_user(username, password):
 def get_user_profile(user_id):
     conn = get_connection()
     c = conn.cursor()
-    c.execute("SELECT username, email, timezone, sports_preference, weekly_goal_hours, created_at, xp, level, freeze_tokens FROM users WHERE id = ?", (user_id,))
+    c.execute("SELECT username, email, timezone, sports_preference, weekly_goal_hours, created_at, xp, level, freeze_tokens, subdomain, tier FROM users WHERE id = ?", (user_id,))
     row = c.fetchone()
     conn.close()
     return row
+
+def get_top_leaderboard():
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT username, xp, level FROM users ORDER BY xp DESC LIMIT 5")
+    rows = c.fetchall()
+    conn.close()
+    return rows
 
 def add_user_xp(user_id, xp_gained):
     conn = get_connection()
@@ -179,14 +189,14 @@ def get_boss_info():
     conn.close()
     return row if row else ("Procrastination Behemoth", 10000, 6420)
 
-def update_user_profile(user_id, email, timezone, sports_pref, goal_hours):
+def update_user_profile(user_id, email, timezone, sports_pref, goal_hours, subdomain="athlete", tier="Pro Enterprise Tier"):
     conn = get_connection()
     c = conn.cursor()
     c.execute("""
         UPDATE users 
-        SET email = ?, timezone = ?, sports_preference = ?, weekly_goal_hours = ? 
+        SET email = ?, timezone = ?, sports_preference = ?, weekly_goal_hours = ?, subdomain = ?, tier = ?
         WHERE id = ?
-    """, (email, timezone, sports_pref, goal_hours, user_id))
+    """, (email, timezone, sports_pref, goal_hours, subdomain, tier, user_id))
     conn.commit()
     conn.close()
 

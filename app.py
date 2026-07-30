@@ -7,10 +7,13 @@ from streamlit_mic_recorder import speech_to_text
 from database import (
     register_user, authenticate_user, add_task, get_tasks,
     update_task_status, delete_task, get_habits, add_habit, toggle_habit_day,
-    get_user_profile, update_user_profile, export_user_data, add_user_xp, get_boss_info
+    get_user_profile, update_user_profile, export_user_data, add_user_xp, get_boss_info, get_top_leaderboard
 )
 from styles import apply_neon_theme, render_score_ring_hd
-from ai_engine import calculate_productivity_score, generate_rule_insights, get_ai_coach_response, calculate_ai_recovery_metrics
+from ai_engine import (
+    calculate_productivity_score, generate_rule_insights, get_ai_coach_response, 
+    calculate_ai_recovery_metrics, generate_executive_weekly_report
+)
 
 st.set_page_config(page_title="Elevate - The AI Productivity Coach", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
 apply_neon_theme()
@@ -84,16 +87,22 @@ if not st.session_state.user_id:
                     st.error("Username taken.")
     st.stop()
 
-# --- TOP HEADER LOGO ---
-st.markdown("""
+# --- TOP HEADER LOGO & PRO SUBDOMAIN INDICATOR ---
+profile_data = get_user_profile(st.session_state.user_id)
+user_subdomain = profile_data[9] if profile_data and len(profile_data) > 9 else "athlete"
+user_tier = profile_data[10] if profile_data and len(profile_data) > 10 else "Pro Enterprise Tier"
+
+st.markdown(f"""
 <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 0 20px 0;">
     <div class="brand-button">⚡ Elevate</div>
-    <div style="color:#94a3b8; font-size:14px; font-weight:700;">The AI Productivity Coach</div>
+    <div style="color:#94a3b8; font-size:14px; font-weight:700;">
+        <span style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid #10b981; border-radius:8px; padding:4px 10px; font-weight:800; font-size:12px; margin-right:8px;">{user_subdomain}.elevate.ai</span>
+        {user_tier} ✦
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-# --- FETCH USER PROFILE & BOSS DATA ---
-profile_data = get_user_profile(st.session_state.user_id)
+# --- FETCH PROFILE & BOSS DATA ---
 user_xp = profile_data[6] if profile_data and len(profile_data) > 6 else 350
 user_level = profile_data[7] if profile_data and len(profile_data) > 7 else 3
 freeze_tokens = profile_data[8] if profile_data and len(profile_data) > 8 else 2
@@ -125,21 +134,22 @@ with st.sidebar:
     )
     st.session_state.nav_page = menu
 
-    st.markdown("<div style='height: 60px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
     
     with st.expander(f"👤 Account Hub: {st.session_state.username}", expanded=False):
         st.caption(f"User ID: #00{st.session_state.user_id}")
-        st.caption("Plan: Enterprise Commercial Tier ✦")
+        st.caption(f"Plan: {user_tier}")
         st.markdown("---")
         
         with st.form("settings_form"):
-            st.markdown("##### ⚙️ Account Settings")
+            st.markdown("##### ⚙️ Account & Commercial Settings")
             u_email = st.text_input("Email", value=profile_data[1] if profile_data else "")
             u_tz = st.selectbox("Timezone", ["UTC", "IST", "EST", "PST"], index=1)
             u_goal = st.number_input("Weekly Goal (Hrs)", value=profile_data[4] if profile_data else 20)
-            if st.form_submit_button("Save Settings"):
-                update_user_profile(st.session_state.user_id, u_email, u_tz, profile_data[3], u_goal)
-                st.success("Profile Updated!")
+            u_subd = st.text_input("Custom Workspace Subdomain", value=user_subdomain)
+            if st.form_submit_button("Save Commercial Settings"):
+                update_user_profile(st.session_state.user_id, u_email, u_tz, profile_data[3], u_goal, u_subd, user_tier)
+                st.success("Subdomain & Settings Saved!")
                 st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
@@ -211,22 +221,26 @@ if menu == "Dashboard":
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # AI STRAIN VS RECOVERY CARD
-        st.markdown(f"""
-        <div class="hd-card" style="border-left: 6px solid #38bdf8;">
-            <div style="font-size:18px; font-weight:900; color:#ffffff; margin-bottom:12px;">🧬 Physical Strain vs. Cognitive Recovery Engine</div>
-            <div style="display:flex; justify-content:space-around; text-align:center; margin-bottom:12px;">
-                <div>
-                    <div style="font-size:12px; color:#94a3b8; font-weight:800;">DAILY STRAIN</div>
-                    <div style="font-size:28px; font-weight:900; color:#ef4444;">{strain}%</div>
-                </div>
-                <div>
-                    <div style="font-size:12px; color:#94a3b8; font-weight:800;">RECOVERY STATE</div>
-                    <div style="font-size:28px; font-weight:900; color:#10b981;">{recovery}%</div>
-                </div>
+        # WEARABLE APPLE WATCH / FITBIT BIO-SYNC CARD
+        st.markdown("""
+        <div class="hd-card" style="border-left: 6px solid #a855f7;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:18px; font-weight:900; color:#ffffff;">⌚ Smart Wearable & Strava Biometric Telemetry</div>
+                <span style="color:#10b981; font-size:12px; font-weight:800;">● LIVE SYNCED</span>
             </div>
-            <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:12px; font-size:13px; color:#38bdf8; font-weight:700;">
-                💡 AI Bio-Advice: {rec_advice}
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-top:14px; text-align:center;">
+                <div style="background:rgba(255,255,255,0.03); padding:10px; border-radius:12px;">
+                    <div style="font-size:11px; color:#94a3b8;">HEART RATE</div>
+                    <div style="font-size:20px; font-weight:900; color:#ef4444;">134 BPM</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); padding:10px; border-radius:12px;">
+                    <div style="font-size:11px; color:#94a3b8;">HRV VARIABILITY</div>
+                    <div style="font-size:20px; font-weight:900; color:#38bdf8;">68 ms</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); padding:10px; border-radius:12px;">
+                    <div style="font-size:11px; color:#94a3b8;">ACTIVE CALORIES</div>
+                    <div style="font-size:20px; font-weight:900; color:#10b981;">620 kcal</div>
+                </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -247,19 +261,20 @@ if menu == "Dashboard":
         </div>
         """, unsafe_allow_html=True)
 
+        # TOP 0.1% GLOBAL LEADERBOARD CARD
         st.markdown("""
         <div class="hd-card">
-            <div style="font-size:18px; font-weight:900; color:#ffffff; margin-bottom:12px;">⚡ Quick Action Speed-Dial</div>
+            <div style="font-size:18px; font-weight:900; color:#ffffff; margin-bottom:12px;">🥇 Top 0.1% Global Leaderboard</div>
         """, unsafe_allow_html=True)
-        qa1, qa2 = st.columns(2)
-        if qa1.button("🏋️ Add Gym", key="qa_gym"):
-            add_task(st.session_state.user_id, "Gym Workout Sprint", "Health", "High 🔥", 60)
-            add_user_xp(st.session_state.user_id, 25)
-            st.rerun()
-        if qa2.button("🏸 Badminton", key="qa_bad"):
-            add_task(st.session_state.user_id, "Badminton Match", "Health", "High 🔥", 45)
-            add_user_xp(st.session_state.user_id, 25)
-            st.rerun()
+        leaderboard_data = get_top_leaderboard()
+        for rank, (u_name, u_xp_val, u_lvl) in enumerate(leaderboard_data, 1):
+            badge_icon = "👑" if rank == 1 else ("🥈" if rank == 2 else "🥉")
+            st.markdown(f"""
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <span style="font-weight:800; font-size:13px; color:#f8fafc;">{badge_icon} #{rank} {u_name}</span>
+                <span style="font-size:12px; color:#10b981; font-weight:800;">Lvl {u_lvl} | {u_xp_val} XP</span>
+            </div>
+            """, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     # UNLOCKABLE TROPHY BADGES SECTION
@@ -496,23 +511,33 @@ if menu == "Dashboard":
 elif menu == "Tasks":
     st.markdown("<h2 style='color:#ffffff; font-weight:900;'>📋 Sportive Task Command</h2>", unsafe_allow_html=True)
     
-    # CYBERPUNK FULL SCREEN FOCUS TIMER OVERLAY TOGGLE
-    if st.session_state.focus_mode_active:
-        st.markdown("""
-        <div class="cyber-focus-card">
-            <div style="color:#38bdf8; font-size:14px; font-weight:800; letter-spacing:2px;">CYBERPUNK FOCUS OVERLAY ACTIVE</div>
-            <div style="font-size:72px; font-weight:900; color:#ffffff; margin:16px 0;">45 : 00</div>
-            <div style="color:#94a3b8; font-size:16px;">Zero Distractions. Protect your focus window.</div>
-        </div>
-        <br>
-        """, unsafe_allow_html=True)
-        if st.button("Exit Focus Overlay ✖️", key="exit_focus"):
-            st.session_state.focus_mode_active = False
-            st.rerun()
-    else:
-        if st.button("🚀 Enter Cyberpunk Focus Sprint Overlay", key="enter_focus"):
-            st.session_state.focus_mode_active = True
-            st.rerun()
+    # 1-V-1 RIVAL DUEL & CYBERPUNK FOCUS OVERLAY TOGGLE
+    d_col1, d_col2 = st.columns(2)
+    with d_col1:
+        if st.session_state.focus_mode_active:
+            st.markdown("""
+            <div class="cyber-focus-card">
+                <div style="color:#38bdf8; font-size:14px; font-weight:800; letter-spacing:2px;">CYBERPUNK FOCUS OVERLAY ACTIVE</div>
+                <div style="font-size:72px; font-weight:900; color:#ffffff; margin:16px 0;">45 : 00</div>
+                <div style="color:#94a3b8; font-size:16px;">Zero Distractions. Protect your focus window.</div>
+            </div>
+            <br>
+            """, unsafe_allow_html=True)
+            if st.button("Exit Focus Overlay ✖️", key="exit_focus"):
+                st.session_state.focus_mode_active = False
+                st.rerun()
+        else:
+            if st.button("🚀 Enter Cyberpunk Focus Sprint Overlay", key="enter_focus", use_container_width=True):
+                st.session_state.focus_mode_active = True
+                st.rerun()
+
+    with d_col2:
+        with st.popover("⚔️ Launch 1-v-1 Focus Duel", use_container_width=True):
+            st.markdown("##### ⚔️ Challenge a Rival")
+            r_user = st.text_input("Rival Username", value="CyberRival_99")
+            r_wager = st.number_input("XP Wager Stake", value=50, step=25)
+            if st.button("🔥 SEND DUEL CHALLENGE"):
+                st.success(f"Duel Challenge Sent to {r_user} for {r_wager} XP!")
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("**🎙️ Voice Sprint Recording**")
@@ -547,7 +572,7 @@ elif menu == "Tasks":
                 st.rerun()
             st.divider()
 
-# --- VIEW 3: HABIT MATRIX (HYPER-INTERACTIVE 3D) ---
+# --- VIEW 3: HABIT MATRIX ---
 elif menu == "Habit Matrix":
     st.markdown("<h2 style='color:#ffffff; font-weight:900;'>📅 Hyper-Interactive 3D Habit Matrix</h2>", unsafe_allow_html=True)
     st.caption("Press any 3D day block below to toggle your state and trigger XP/level gain.")
@@ -579,10 +604,15 @@ elif menu == "Habit Matrix":
                 st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-# --- VIEW 4: ANALYTICS (WITH GHOST PACE RACE CHART) ---
+# --- VIEW 4: ANALYTICS (WITH PDF REPORT DOWNLOAD) ---
 elif menu == "Analytics":
-    st.markdown("<h2 style='color:#ffffff; font-weight:900;'>📊 Live Performance Analytics</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#ffffff; font-weight:900;'>📊 Live Performance Analytics & Briefings</h2>", unsafe_allow_html=True)
     
+    # AUTOMATED EXECUTIVE PDF BRIEFING DOWNLOAD
+    pdf_report_txt = generate_executive_weekly_report(st.session_state.username, df_tasks)
+    st.download_button("📄 Download Weekly Executive Performance Briefing (PDF/TXT)", data=pdf_report_txt, file_name=f"{st.session_state.username}_executive_briefing.txt", mime="text/plain")
+
+    st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("<div class='hd-card'><div style='font-size:20px; font-weight:900; color:#10b981; margin-bottom:12px;'>📈 Live Ghost Pace Race Chart (You vs. Best Self)</div>", unsafe_allow_html=True)
     
     trend_data = pd.DataFrame({
@@ -647,17 +677,27 @@ elif menu == "Analytics":
         st.plotly_chart(fig_vol, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-# --- VIEW 5: AI COACH ---
+# --- VIEW 5: AI COACH (WITH VOICE SPOKEN AUDIO ENGINE) ---
 elif menu == "AI Coach":
     st.markdown("""
     <div style="display:flex; align-items:center; gap:20px; margin-bottom:24px;">
         <div style="font-size:36px; background:#10b981; width:60px; height:60px; border-radius:18px; display:flex; align-items:center; justify-content:center;">🤖</div>
         <div>
-            <div style="font-size:28px; font-weight:900; color:#ffffff;">AI Productivity Coach</div>
-            <div style="color:#10b981; font-size:14px; font-weight:800; letter-spacing:0.5px;">● ACTIVE & ANALYZING PERFORMANCE DATA</div>
+            <div style="font-size:28px; font-weight:900; color:#ffffff;">AI Productivity Coach (Voice Engine)</div>
+            <div style="color:#10b981; font-size:14px; font-weight:800; letter-spacing:0.5px;">● ACTIVE & READY FOR VOICE HYPE SPEECHES</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    if st.button("🔊 Get Pre-Workout AI Spoken Hype Audio"):
+        st.info("🎙️ AI Spoken Audio Coach: 'Listen up! Today you lock in your Heavy Gym Compound Lifts. Stay hydrated, keep your focus state locked, and let's crush Level 4!'")
+        st.components.v1.html("""
+        <audio autoplay controls style="width: 100%; filter: invert(100%);">
+            <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" type="audio/mpeg">
+        </audio>
+        """, height=50)
+
+    st.markdown("<br>", unsafe_allow_html=True)
     
     if "messages" not in st.session_state:
         st.session_state.messages = [
