@@ -34,7 +34,7 @@ if not st.session_state.user_id:
     st.markdown("""
     <div style="display:flex; justify-content:space-between; align-items:center; padding: 20px 0;">
         <div class="brand-button">⚡ Elevate</div>
-        <div style="color: #94a3b8; font-size: 14px; font-weight: 700;">Support: <a href="mailto:aryanreddy2668@gmail.com" style="color:#10b981; text-decoration:none;">aryanreddy2668@gmail.com</a></div>
+        <div style="color: #94a3b8; font-size: 14px; font-weight: 700;">Support: <a href="mailto:aryanreddy2668@gmail.com" style="color:#00f3ff; text-decoration:none;">aryanreddy2668@gmail.com</a></div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -42,22 +42,22 @@ if not st.session_state.user_id:
     
     with col_left_hero:
         st.markdown("""
-        <div class="hd-card" style="border-left: 6px solid #10b981;">
+        <div class="hd-card" style="border-left: 6px solid #00f3ff;">
             <div style="font-size: 44px; font-weight: 900; color: #ffffff; line-height: 1.1; letter-spacing: -1.5px;">The AI Productivity Coach</div>
             <div style="color: #94a3b8; font-size: 16px; margin-top: 14px; line-height: 1.6; font-weight: 500;">
                 Enterprise multi-tenant productivity engine. Combine athletic tracking with AI deep work optimization, RPG leveling, habits, and stock-style live analytics.
             </div>
             <br>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <div style="background: rgba(255,255,255,0.03); padding: 18px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.06);">
-                    <div style="font-size: 24px;">🏸</div>
+                <div style="background: rgba(255,255,255,0.03); padding: 18px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.08); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="font-size: 28px;">🏸</div>
                     <div style="font-weight: 800; color: #ffffff; margin-top: 6px;">Sports & Health Tasks</div>
-                    <div style="font-size: 12px; color: #64748b;">Gym, Sprinting & Badminton</div>
+                    <div style="font-size: 12px; color: #00f3ff;">Gym, Sprinting & Badminton</div>
                 </div>
-                <div style="background: rgba(255,255,255,0.03); padding: 18px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.06);">
-                    <div style="font-size: 24px;">📈</div>
+                <div style="background: rgba(255,255,255,0.03); padding: 18px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.08); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="font-size: 28px;">📈</div>
                     <div style="font-weight: 800; color: #ffffff; margin-top: 6px;">Live Stock Analytics</div>
-                    <div style="font-size: 12px; color: #64748b;">Real-time momentum tracking</div>
+                    <div style="font-size: 12px; color: #10b981;">Real-time momentum tracking</div>
                 </div>
             </div>
         </div>
@@ -96,8 +96,8 @@ st.markdown(f"""
 <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 0 20px 0;">
     <div class="brand-button">⚡ Elevate</div>
     <div style="color:#94a3b8; font-size:14px; font-weight:700;">
-        <span style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid #10b981; border-radius:8px; padding:4px 10px; font-weight:800; font-size:12px; margin-right:8px;">{user_subdomain}.elevate.ai</span>
-        {user_tier} ✦
+        <span style="background:rgba(0,243,255,0.15); color:#00f3ff; border:1px solid #00f3ff; border-radius:8px; padding:6px 12px; font-weight:900; font-size:12px; margin-right:8px; box-shadow:0 0 10px rgba(0,243,255,0.3);">{user_subdomain}.elevate.ai</span>
+        <span style="color:#ffffff; font-weight:800;">{user_tier} ✦</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -114,13 +114,13 @@ with st.sidebar:
     
     # RPG LEVEL & GAMIFICATION CARD
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(99, 102, 241, 0.15)); padding:16px; border-radius:16px; border:1px solid rgba(16, 185, 129, 0.3); margin-bottom:16px;">
+    <div style="background: linear-gradient(135deg, rgba(0, 243, 255, 0.15), rgba(168, 85, 247, 0.2)); padding:18px; border-radius:18px; border:1px solid rgba(0, 243, 255, 0.4); margin-bottom:16px; box-shadow: 0 10px 25px rgba(0,243,255,0.15);">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <span style="font-weight:900; color:#ffffff; font-size:16px;">LEVEL {user_level} ATHLETE</span>
-            <span style="color:#eab308; font-size:12px; font-weight:800;">🧊 {freeze_tokens} Freeze Tokens</span>
+            <span style="color:#eab308; font-size:12px; font-weight:800; filter:drop-shadow(0 0 4px #eab308);">🧊 {freeze_tokens} Freeze Tokens</span>
         </div>
-        <div style="font-size:12px; color:#94a3b8; margin-top:4px;">XP: {user_xp} / {(user_level)*200}</div>
-        <div class="xp-bar-bg" style="margin-top:8px;">
+        <div style="font-size:12px; color:#cbd5e1; margin-top:6px; font-weight:700;">XP: {user_xp} / {(user_level)*200}</div>
+        <div class="xp-bar-bg" style="margin-top:10px;">
             <div class="xp-bar-fill" style="width: {min(100, int((user_xp % 200)/2))}%;"></div>
         </div>
     </div>
@@ -173,19 +173,19 @@ if menu == "Dashboard":
     
     # GLOBAL BOSS RAID BANNER
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(168, 85, 247, 0.2)); border:1px solid #ef4444; border-radius:18px; padding:16px 24px; margin-bottom:20px;">
+    <div style="background: linear-gradient(135deg, rgba(255, 0, 85, 0.25), rgba(168, 85, 247, 0.25)); border:2px solid #ff0055; border-radius:20px; padding:18px 26px; margin-bottom:20px; box-shadow: 0 0 30px rgba(255, 0, 85, 0.25);">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
-                <span style="font-size:18px; font-weight:900; color:#ef4444;">⚔️ GLOBAL COMMUNITY RAID BOSS</span>
-                <div style="font-size:22px; font-weight:900; color:#ffffff;">{boss_name}</div>
+                <span style="font-size:14px; font-weight:900; color:#ff0055; letter-spacing:1px;">⚔️ GLOBAL COMMUNITY RAID BOSS</span>
+                <div style="font-size:24px; font-weight:900; color:#ffffff;">{boss_name}</div>
             </div>
             <div style="text-align:right;">
-                <span style="font-size:20px; font-weight:900; color:#ffffff;">{boss_cur_hp} / {boss_max_hp} HP</span>
-                <div style="font-size:12px; color:#cbd5e1;">Completing tasks attacks the boss!</div>
+                <span style="font-size:22px; font-weight:900; color:#ffffff;">{boss_cur_hp} / {boss_max_hp} HP</span>
+                <div style="font-size:12px; color:#cbd5e1; font-weight:600;">Completing tasks attacks the boss!</div>
             </div>
         </div>
-        <div class="xp-bar-bg" style="margin-top:10px; background:rgba(0,0,0,0.5);">
-            <div style="background: linear-gradient(90deg, #ef4444, #f97316); height:100%; width: {int((boss_cur_hp/boss_max_hp)*100)}%; border-radius:12px;"></div>
+        <div class="xp-bar-bg" style="margin-top:12px; background:rgba(0,0,0,0.6);">
+            <div style="background: linear-gradient(90deg, #ff0055, #f97316); height:100%; width: {int((boss_cur_hp/boss_max_hp)*100)}%; border-radius:12px; box-shadow:0 0 12px #ff0055;"></div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -211,7 +211,7 @@ if menu == "Dashboard":
             st.progress(0.66)
             st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
             
-            st.markdown(f"<span style='font-size:16px; font-weight:800;'>Tasks Completed</span> <span style='float:right; color:#38bdf8; font-size:20px; font-weight:900;'>{completed_tasks_count}/{max(1, total_tasks_count)}</span>", unsafe_allow_html=True)
+            st.markdown(f"<span style='font-size:16px; font-weight:800;'>Tasks Completed</span> <span style='float:right; color:#00f3ff; font-size:20px; font-weight:900;'>{completed_tasks_count}/{max(1, total_tasks_count)}</span>", unsafe_allow_html=True)
             st.progress(completed_tasks_count / max(1, total_tasks_count))
 
             st.markdown("<br>", unsafe_allow_html=True)
@@ -226,20 +226,20 @@ if menu == "Dashboard":
         <div class="hd-card" style="border-left: 6px solid #a855f7;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div style="font-size:18px; font-weight:900; color:#ffffff;">⌚ Smart Wearable & Strava Biometric Telemetry</div>
-                <span style="color:#10b981; font-size:12px; font-weight:800;">● LIVE SYNCED</span>
+                <span style="color:#10b981; font-size:12px; font-weight:800; filter:drop-shadow(0 0 6px #10b981);">● LIVE SYNCED</span>
             </div>
             <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-top:14px; text-align:center;">
-                <div style="background:rgba(255,255,255,0.03); padding:10px; border-radius:12px;">
-                    <div style="font-size:11px; color:#94a3b8;">HEART RATE</div>
-                    <div style="font-size:20px; font-weight:900; color:#ef4444;">134 BPM</div>
+                <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,0.06); transition:transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="font-size:11px; color:#94a3b8; font-weight:800;">HEART RATE</div>
+                    <div style="font-size:22px; font-weight:900; color:#ff0055;">134 BPM</div>
                 </div>
-                <div style="background:rgba(255,255,255,0.03); padding:10px; border-radius:12px;">
-                    <div style="font-size:11px; color:#94a3b8;">HRV VARIABILITY</div>
-                    <div style="font-size:20px; font-weight:900; color:#38bdf8;">68 ms</div>
+                <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,0.06); transition:transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="font-size:11px; color:#94a3b8; font-weight:800;">HRV VARIABILITY</div>
+                    <div style="font-size:22px; font-weight:900; color:#00f3ff;">68 ms</div>
                 </div>
-                <div style="background:rgba(255,255,255,0.03); padding:10px; border-radius:12px;">
-                    <div style="font-size:11px; color:#94a3b8;">ACTIVE CALORIES</div>
-                    <div style="font-size:20px; font-weight:900; color:#10b981;">620 kcal</div>
+                <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,0.06); transition:transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="font-size:11px; color:#94a3b8; font-weight:800;">ACTIVE CALORIES</div>
+                    <div style="font-size:22px; font-weight:900; color:#10b981;">620 kcal</div>
                 </div>
             </div>
         </div>
@@ -270,14 +270,14 @@ if menu == "Dashboard":
         for rank, (u_name, u_xp_val, u_lvl) in enumerate(leaderboard_data, 1):
             badge_icon = "👑" if rank == 1 else ("🥈" if rank == 2 else "🥉")
             st.markdown(f"""
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <div class="leaderboard-row">
                 <span style="font-weight:800; font-size:13px; color:#f8fafc;">{badge_icon} #{rank} {u_name}</span>
-                <span style="font-size:12px; color:#10b981; font-weight:800;">Lvl {u_lvl} | {u_xp_val} XP</span>
+                <span style="font-size:12px; color:#00f3ff; font-weight:900;">Lvl {u_lvl} | {u_xp_val} XP</span>
             </div>
             """, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # UNLOCKABLE TROPHY BADGES SECTION
+    # UNLOCKABLE TROPHY BADGES SECTION WITH MODALS
     st.markdown("""
     <div style="margin: 20px 0 12px 0;">
         <div style="font-size:24px; font-weight:900; color:#ffffff;">🏆 Achievement Trophies & Badges</div>
@@ -287,35 +287,43 @@ if menu == "Dashboard":
     with t1:
         st.markdown("""
         <div class="trophy-card">
-            <div style="font-size:32px;">🏋️‍♂️</div>
+            <div style="font-size:36px;">🏋️‍♂️</div>
             <div style="font-weight:900; color:#f8fafc; font-size:14px; margin-top:4px;">Iron Legs</div>
             <div style="font-size:11px; color:#10b981; font-weight:800;">UNLOCKED</div>
         </div>
         """, unsafe_allow_html=True)
+        with st.popover("Badge Info", use_container_width=True):
+            st.caption("Unlocked by completing 10 Gym leg days in a month!")
     with t2:
         st.markdown("""
         <div class="trophy-card">
-            <div style="font-size:32px;">🏸</div>
+            <div style="font-size:36px;">🏸</div>
             <div style="font-weight:900; color:#f8fafc; font-size:14px; margin-top:4px;">Smash Master</div>
             <div style="font-size:11px; color:#10b981; font-weight:800;">UNLOCKED</div>
         </div>
         """, unsafe_allow_html=True)
+        with st.popover("Badge Info", use_container_width=True):
+            st.caption("Unlocked by logging 15 Badminton matches!")
     with t3:
         st.markdown("""
         <div class="trophy-card">
-            <div style="font-size:32px;">🧠</div>
+            <div style="font-size:36px;">🧠</div>
             <div style="font-weight:900; color:#f8fafc; font-size:14px; margin-top:4px;">Flow Titan</div>
             <div style="font-size:11px; color:#eab308; font-weight:800;">80% PROGRESS</div>
         </div>
         """, unsafe_allow_html=True)
+        with st.popover("Badge Info", use_container_width=True):
+            st.caption("Complete 50 hours of uninterrupted deep work to unlock.")
     with t4:
         st.markdown("""
         <div class="trophy-card">
-            <div style="font-size:32px;">⚡</div>
+            <div style="font-size:36px;">⚡</div>
             <div style="font-weight:900; color:#f8fafc; font-size:14px; margin-top:4px;">Cyber Athlete</div>
             <div style="font-size:11px; color:#64748b; font-weight:800;">LOCKED (LVL 5)</div>
         </div>
         """, unsafe_allow_html=True)
+        with st.popover("Badge Info", use_container_width=True):
+            st.caption("Reach Level 5 Athlete status to claim this cyber badge.")
 
     # 3D ATHLETIC MATRIX
     st.markdown("""
@@ -381,7 +389,7 @@ if menu == "Dashboard":
             <div class="{card_class}">
                 <div style="font-size:36px; margin-bottom:8px;">{info['icon']}</div>
                 <div style="font-size:18px; font-weight:900; color:#ffffff;">{info['title']}</div>
-                <div style="color:#10b981; font-size:12px; font-weight:800; margin-top:4px;">{info['tag']}</div>
+                <div style="color:#00f3ff; font-size:12px; font-weight:800; margin-top:4px;">{info['tag']}</div>
                 <div style="color:#94a3b8; font-size:12px; margin-top:4px;">{info['subtitle']}</div>
             """, unsafe_allow_html=True)
             
@@ -414,7 +422,7 @@ if menu == "Dashboard":
             <div class="{card_class}">
                 <div style="font-size:36px; margin-bottom:8px;">{info['icon']}</div>
                 <div style="font-size:18px; font-weight:900; color:#ffffff;">{info['title']}</div>
-                <div style="color:#10b981; font-size:12px; font-weight:800; margin-top:4px;">{info['tag']}</div>
+                <div style="color:#00f3ff; font-size:12px; font-weight:800; margin-top:4px;">{info['tag']}</div>
                 <div style="color:#94a3b8; font-size:12px; margin-top:4px;">{info['subtitle']}</div>
             """, unsafe_allow_html=True)
             
@@ -517,7 +525,7 @@ elif menu == "Tasks":
         if st.session_state.focus_mode_active:
             st.markdown("""
             <div class="cyber-focus-card">
-                <div style="color:#38bdf8; font-size:14px; font-weight:800; letter-spacing:2px;">CYBERPUNK FOCUS OVERLAY ACTIVE</div>
+                <div style="color:#00f3ff; font-size:14px; font-weight:800; letter-spacing:2px;">CYBERPUNK FOCUS OVERLAY ACTIVE</div>
                 <div style="font-size:72px; font-weight:900; color:#ffffff; margin:16px 0;">45 : 00</div>
                 <div style="color:#94a3b8; font-size:16px;">Zero Distractions. Protect your focus window.</div>
             </div>
@@ -604,7 +612,7 @@ elif menu == "Habit Matrix":
                 st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-# --- VIEW 4: ANALYTICS (WITH PDF REPORT DOWNLOAD) ---
+# --- VIEW 4: ANALYTICS ---
 elif menu == "Analytics":
     st.markdown("<h2 style='color:#ffffff; font-weight:900;'>📊 Live Performance Analytics & Briefings</h2>", unsafe_allow_html=True)
     
@@ -613,7 +621,7 @@ elif menu == "Analytics":
     st.download_button("📄 Download Weekly Executive Performance Briefing (PDF/TXT)", data=pdf_report_txt, file_name=f"{st.session_state.username}_executive_briefing.txt", mime="text/plain")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<div class='hd-card'><div style='font-size:20px; font-weight:900; color:#10b981; margin-bottom:12px;'>📈 Live Ghost Pace Race Chart (You vs. Best Self)</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hd-card'><div style='font-size:20px; font-weight:900; color:#00f3ff; margin-bottom:12px;'>📈 Live Ghost Pace Race Chart (You vs. Best Self)</div>", unsafe_allow_html=True)
     
     trend_data = pd.DataFrame({
         "Session": ["Mon AM", "Mon PM", "Tue AM", "Tue PM", "Wed AM", "Wed PM", "Thu AM"],
@@ -625,8 +633,8 @@ elif menu == "Analytics":
     fig_stock.add_trace(go.Scatter(
         x=trend_data["Session"], y=trend_data["Your_Focus"],
         mode='lines+markers', name="Live Current Pace",
-        line=dict(color='#10b981', width=4),
-        fill='tozeroy', fillcolor='rgba(16, 185, 129, 0.15)'
+        line=dict(color='#00f3ff', width=4),
+        fill='tozeroy', fillcolor='rgba(0, 243, 255, 0.15)'
     ))
     fig_stock.add_trace(go.Scatter(
         x=trend_data["Session"], y=trend_data["Ghost_Best"],
@@ -650,7 +658,7 @@ elif menu == "Analytics":
         })
         fig_donut = px.pie(
             donut_df, names="Category", values="Hours", hole=0.6,
-            color_discrete_sequence=["#10b981", "#ef4444", "#eab308", "#ffffff"]
+            color_discrete_sequence=["#00f3ff", "#ff0055", "#eab308", "#ffffff"]
         )
         fig_donut.update_layout(
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
@@ -668,7 +676,7 @@ elif menu == "Analytics":
         })
         fig_vol = px.bar(
             volume_df, x="Week", y=["Completed", "Pending"],
-            color_discrete_sequence=["#10b981", "#ef4444"]
+            color_discrete_sequence=["#00f3ff", "#ff0055"]
         )
         fig_vol.update_layout(
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
@@ -677,14 +685,14 @@ elif menu == "Analytics":
         st.plotly_chart(fig_vol, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-# --- VIEW 5: AI COACH (WITH VOICE SPOKEN AUDIO ENGINE) ---
+# --- VIEW 5: AI COACH ---
 elif menu == "AI Coach":
     st.markdown("""
     <div style="display:flex; align-items:center; gap:20px; margin-bottom:24px;">
-        <div style="font-size:36px; background:#10b981; width:60px; height:60px; border-radius:18px; display:flex; align-items:center; justify-content:center;">🤖</div>
+        <div style="font-size:36px; background:#00f3ff; width:60px; height:60px; border-radius:18px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px #00f3ff;">🤖</div>
         <div>
             <div style="font-size:28px; font-weight:900; color:#ffffff;">AI Productivity Coach (Voice Engine)</div>
-            <div style="color:#10b981; font-size:14px; font-weight:800; letter-spacing:0.5px;">● ACTIVE & READY FOR VOICE HYPE SPEECHES</div>
+            <div style="color:#00f3ff; font-size:14px; font-weight:800; letter-spacing:0.5px;">● ACTIVE & READY FOR VOICE HYPE SPEECHES</div>
         </div>
     </div>
     """, unsafe_allow_html=True)

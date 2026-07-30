@@ -50,7 +50,6 @@ def calculate_ai_recovery_metrics(df):
     return strain, recovery, advice
 
 def generate_executive_weekly_report(username, df):
-    """Generates an executive PDF performance brief string."""
     completed = len(df[df['Status'] == 'Completed']) if not df.empty and 'Status' in df.columns else 3
     total_mins = df['TimeSpent'].sum() if not df.empty and 'TimeSpent' in df.columns else 195
     
