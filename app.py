@@ -7,7 +7,7 @@ from streamlit_mic_recorder import speech_to_text
 from database import (
     register_user, authenticate_user, add_task, get_tasks,
     update_task_status, delete_task, get_habits, add_habit, toggle_habit_day,
-    get_user_profile, update_user_profile, export_user_data
+    get_user_profile, update_user_profile, export_user_data, add_user_xp
 )
 from styles import apply_neon_theme, render_score_ring_hd
 from ai_engine import calculate_productivity_score, generate_rule_insights, get_ai_coach_response
@@ -23,6 +23,8 @@ if 'nav_page' not in st.session_state:
     st.session_state.nav_page = "Dashboard"
 if 'expanded_card' not in st.session_state:
     st.session_state.expanded_card = None
+if 'focus_mode_active' not in st.session_state:
+    st.session_state.focus_mode_active = False
 
 # --- AUTHENTICATION SCREEN ---
 if not st.session_state.user_id:
@@ -40,7 +42,7 @@ if not st.session_state.user_id:
         <div class="hd-card" style="border-left: 6px solid #10b981;">
             <div style="font-size: 44px; font-weight: 900; color: #ffffff; line-height: 1.1; letter-spacing: -1.5px;">The AI Productivity Coach</div>
             <div style="color: #94a3b8; font-size: 16px; margin-top: 14px; line-height: 1.6; font-weight: 500;">
-                Enterprise multi-tenant productivity engine. Combine athletic tracking with AI deep work optimization, habits, and stock-style live analytics.
+                Enterprise multi-tenant productivity engine. Combine athletic tracking with AI deep work optimization, RPG leveling, habits, and stock-style live analytics.
             </div>
             <br>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
@@ -90,9 +92,30 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# --- FETCH USER PROFILE DATA ---
+profile_data = get_user_profile(st.session_state.user_id)
+user_xp = profile_data[6] if profile_data and len(profile_data) > 6 else 350
+user_level = profile_data[7] if profile_data and len(profile_data) > 7 else 3
+freeze_tokens = profile_data[8] if profile_data and len(profile_data) > 8 else 2
+
 # --- EXPANDED SIDEBAR NAVIGATION ---
 with st.sidebar:
     st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+    
+    # RPG LEVEL & GAMIFICATION CARD
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(99, 102, 241, 0.15)); padding:16px; border-radius:16px; border:1px solid rgba(16, 185, 129, 0.3); margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:900; color:#ffffff; font-size:16px;">LEVEL {user_level} ATHLETE</span>
+            <span style="color:#eab308; font-size:12px; font-weight:800;">🧊 {freeze_tokens} Freeze Tokens</span>
+        </div>
+        <div style="font-size:12px; color:#94a3b8; margin-top:4px;">XP: {user_xp} / {(user_level)*200}</div>
+        <div class="xp-bar-bg" style="margin-top:8px;">
+            <div class="xp-bar-fill" style="width: {min(100, int((user_xp % 200)/2))}%;"></div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     menu = st.radio(
         "Navigation", 
         ["Dashboard", "Tasks", "Habit Matrix", "Analytics", "AI Coach"], 
@@ -101,15 +124,13 @@ with st.sidebar:
     )
     st.session_state.nav_page = menu
 
-    st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 60px;'></div>", unsafe_allow_html=True)
     
-    profile_data = get_user_profile(st.session_state.user_id)
     with st.expander(f"👤 Account Hub: {st.session_state.username}", expanded=False):
         st.caption(f"User ID: #00{st.session_state.user_id}")
         st.caption("Plan: Enterprise Commercial Tier ✦")
         st.markdown("---")
         
-        # Commercial Settings Form
         with st.form("settings_form"):
             st.markdown("##### ⚙️ Account Settings")
             u_email = st.text_input("Email", value=profile_data[1] if profile_data else "")
@@ -120,7 +141,6 @@ with st.sidebar:
                 st.success("Profile Updated!")
                 st.rerun()
 
-        # Data Export Feature
         st.markdown("<br>", unsafe_allow_html=True)
         export_json = export_user_data(st.session_state.user_id)
         st.download_button("📥 Export My Data (JSON)", data=export_json, file_name=f"{st.session_state.username}_data.json", mime="application/json")
@@ -130,7 +150,7 @@ with st.sidebar:
             st.session_state.user_id = None
             st.rerun()
 
-# --- FETCH USER SPECIFIC DATA ---
+# --- FETCH USER TASKS & HABITS ---
 raw_tasks = get_tasks(st.session_state.user_id)
 df_tasks = pd.DataFrame(raw_tasks, columns=["ID", "Title", "Category", "Priority", "Status", "TimeSpent", "CreatedAt"])
 habits = get_habits(st.session_state.user_id)
@@ -153,7 +173,7 @@ if menu == "Dashboard":
 
         with c_stats:
             st.markdown("<br>", unsafe_allow_html=True)
-            completed_tasks_count = len(df_tasks[df_tasks['Status'] == 'Completed']) if not df_tasks.empty else 2
+            completed_tasks_count = len(df_tasks[df_tasks['Status'] == 'Completed']) if not df_tasks.empty and 'Status' in df_tasks.columns else 2
             total_tasks_count = len(df_tasks) if not df_tasks.empty else 5
             
             st.markdown(f"<span style='font-size:16px; font-weight:800;'>Habits Completed</span> <span style='float:right; color:#10b981; font-size:20px; font-weight:900;'>2/3</span>", unsafe_allow_html=True)
@@ -193,15 +213,57 @@ if menu == "Dashboard":
         qa1, qa2 = st.columns(2)
         if qa1.button("🏋️ Add Gym", key="qa_gym"):
             add_task(st.session_state.user_id, "Gym Workout Sprint", "Health", "High 🔥", 60)
+            add_user_xp(st.session_state.user_id, 25)
             st.rerun()
         if qa2.button("🏸 Badminton", key="qa_bad"):
             add_task(st.session_state.user_id, "Badminton Match", "Health", "High 🔥", 45)
+            add_user_xp(st.session_state.user_id, 25)
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # 3D ATHLETIC & TASK MATRIX
+    # UNLOCKABLE TROPHY BADGES SECTION
     st.markdown("""
     <div style="margin: 20px 0 12px 0;">
+        <div style="font-size:24px; font-weight:900; color:#ffffff;">🏆 Achievement Trophies & Badges</div>
+    </div>
+    """, unsafe_allow_html=True)
+    t1, t2, t3, t4 = st.columns(4)
+    with t1:
+        st.markdown("""
+        <div class="trophy-card">
+            <div style="font-size:32px;">🏋️‍♂️</div>
+            <div style="font-weight:900; color:#f8fafc; font-size:14px; margin-top:4px;">Iron Legs</div>
+            <div style="font-size:11px; color:#10b981; font-weight:800;">UNLOCKED</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with t2:
+        st.markdown("""
+        <div class="trophy-card">
+            <div style="font-size:32px;">🏸</div>
+            <div style="font-weight:900; color:#f8fafc; font-size:14px; margin-top:4px;">Smash Master</div>
+            <div style="font-size:11px; color:#10b981; font-weight:800;">UNLOCKED</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with t3:
+        st.markdown("""
+        <div class="trophy-card">
+            <div style="font-size:32px;">🧠</div>
+            <div style="font-weight:900; color:#f8fafc; font-size:14px; margin-top:4px;">Flow Titan</div>
+            <div style="font-size:11px; color:#eab308; font-weight:800;">80% PROGRESS</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with t4:
+        st.markdown("""
+        <div class="trophy-card">
+            <div style="font-size:32px;">⚡</div>
+            <div style="font-weight:900; color:#f8fafc; font-size:14px; margin-top:4px;">Cyber Athlete</div>
+            <div style="font-size:11px; color:#64748b; font-weight:800;">LOCKED (LVL 5)</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # 3D ATHLETIC MATRIX
+    st.markdown("""
+    <div style="margin: 24px 0 12px 0;">
         <div style="font-size:26px; font-weight:900; color:#ffffff;">🏋️‍♂️ 3D Athletic & Task Interactive Matrix</div>
         <div style="color:#94a3b8; font-size:14px; font-weight:600;">Click any card to smoothly expand in-place for full intelligence report</div>
     </div>
@@ -316,6 +378,21 @@ if menu == "Dashboard":
 
             st.markdown("</div>", unsafe_allow_html=True)
 
+    # AUDIO SOUNDSCAPE CENTER & BINAURAL BEATS
+    st.markdown("""
+    <div class="hd-card" style="margin-top:20px;">
+        <div style="font-size:20px; font-weight:900; color:#ffffff; margin-bottom:8px;">🎧 Cyberpunk Focus Audio & Binaural Beats Player</div>
+        <div style="font-size:13px; color:#94a3b8; margin-bottom:12px;">Select an ambient frequency to trigger peak cognitive performance</div>
+    """, unsafe_allow_html=True)
+    audio_choice = st.selectbox("Audio Track Frequencies", ["Alpha Waves (432Hz Deep Focus)", "Gamma Waves (High Energy Workout)", "Rain & Ambient Focus Noise"])
+    st.components.v1.html("""
+    <audio controls style="width: 100%; filter: invert(100%); opacity: 0.8;">
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    """, height=50)
+    st.markdown("</div>", unsafe_allow_html=True)
+
     st.markdown("<br>", unsafe_allow_html=True)
     c_hab, c_tsk = st.columns([1.8, 1])
 
@@ -345,6 +422,8 @@ if menu == "Dashboard":
                 btn_label = f"{day_labels[d_idx]}\n{'🔥 DONE' if is_active else '○ OFF'}"
                 if h_cols[d_idx].button(btn_label, key=f"dash_h3d_{h[0]}_{day_keys[d_idx]}"):
                     toggle_habit_day(h[0], day_keys[d_idx], is_active)
+                    if not is_active:
+                        add_user_xp(st.session_state.user_id, 15)
                     st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
@@ -358,10 +437,11 @@ if menu == "Dashboard":
         if not df_tasks.empty:
             for idx, row in df_tasks.iterrows():
                 tc1, tc2 = st.columns([4, 1])
-                is_done = (row['Status'] == 'Completed')
+                is_done = (row['Status'] == 'Completed') if 'Status' in row else False
                 if tc1.checkbox(row['Title'], value=is_done, key=f"dash_chk_{row['ID']}"):
                     if not is_done:
                         update_task_status(row['ID'], 'Completed')
+                        add_user_xp(st.session_state.user_id, 30)
                         st.rerun()
                 if tc2.button("🗑️", key=f"dash_del_{row['ID']}"):
                     delete_task(row['ID'])
@@ -375,6 +455,25 @@ if menu == "Dashboard":
 elif menu == "Tasks":
     st.markdown("<h2 style='color:#ffffff; font-weight:900;'>📋 Sportive Task Command</h2>", unsafe_allow_html=True)
     
+    # CYBERPUNK FULL SCREEN FOCUS TIMER OVERLAY TOGGLE
+    if st.session_state.focus_mode_active:
+        st.markdown("""
+        <div class="cyber-focus-card">
+            <div style="color:#38bdf8; font-size:14px; font-weight:800; letter-spacing:2px;">CYBERPUNK FOCUS OVERLAY ACTIVE</div>
+            <div style="font-size:72px; font-weight:900; color:#ffffff; margin:16px 0;">45 : 00</div>
+            <div style="color:#94a3b8; font-size:16px;">Zero Distractions. Protect your focus window.</div>
+        </div>
+        <br>
+        """, unsafe_allow_html=True)
+        if st.button("Exit Focus Overlay ✖️", key="exit_focus"):
+            st.session_state.focus_mode_active = False
+            st.rerun()
+    else:
+        if st.button("🚀 Enter Cyberpunk Focus Sprint Overlay", key="enter_focus"):
+            st.session_state.focus_mode_active = True
+            st.rerun()
+
+    st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("**🎙️ Voice Sprint Recording**")
     v_text = speech_to_text(language='en', start_prompt="🎙️ Speak Sprint Input", stop_prompt="⏹️ Stop Recording", key='mic_input')
     
@@ -389,7 +488,8 @@ elif menu == "Tasks":
         
         if st.form_submit_button("🔥 LOCK IN SPRINT TASK") and t_title:
             add_task(st.session_state.user_id, t_title, t_cat, t_prio, t_mins)
-            st.success("Sprint Locked & Created!")
+            add_user_xp(st.session_state.user_id, 20)
+            st.success("Sprint Locked & Created! (+20 XP)")
             st.rerun()
 
     st.markdown("---")
@@ -428,6 +528,8 @@ elif menu == "Habit Matrix":
             lbl = f"{day_labels[d_idx]}\n{'🔥 DONE' if val else '○ OFF'}"
             if h_cols[d_idx].button(lbl, key=f"mat_full_{h[0]}_{day_keys[d_idx]}"):
                 toggle_habit_day(h[0], day_keys[d_idx], val)
+                if not val:
+                    add_user_xp(st.session_state.user_id, 15)
                 st.rerun()
         st.divider()
 

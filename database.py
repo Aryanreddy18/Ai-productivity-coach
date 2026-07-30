@@ -39,7 +39,7 @@ def init_db():
         )
     ''')
     
-    # AUTO-MIGRATION: Ensure newly added columns exist on existing databases
+    # AUTO-MIGRATION: Ensure Gamification & RPG columns exist
     c.execute("PRAGMA table_info(users);")
     existing_columns = [col[1] for col in c.fetchall()]
     
@@ -47,7 +47,10 @@ def init_db():
         "email": "TEXT DEFAULT ''",
         "timezone": "TEXT DEFAULT 'UTC'",
         "sports_preference": "TEXT DEFAULT 'Gym & Badminton'",
-        "weekly_goal_hours": "INTEGER DEFAULT 20"
+        "weekly_goal_hours": "INTEGER DEFAULT 20",
+        "xp": "INTEGER DEFAULT 350",
+        "level": "INTEGER DEFAULT 3",
+        "freeze_tokens": "INTEGER DEFAULT 2"
     }
     
     for col_name, col_def in missing_columns.items():
@@ -85,7 +88,7 @@ def init_db():
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     ''')
-    
+
     # 4. Activity Logs
     c.execute('''
         CREATE TABLE IF NOT EXISTS activity_logs (
@@ -98,7 +101,6 @@ def init_db():
         )
     ''')
 
-    # Performance Indexing
     c.execute("CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id);")
     c.execute("CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);")
     
@@ -110,7 +112,7 @@ def register_user(username, password, email=""):
     c = conn.cursor()
     try:
         hashed_p = hash_password(password)
-        c.execute("INSERT INTO users (username, password, email) VALUES (?, ?, ?)", (username, hashed_p, email))
+        c.execute("INSERT INTO users (username, password, email, xp, level, freeze_tokens) VALUES (?, ?, ?, 100, 1, 2)", (username, hashed_p, email))
         user_id = c.lastrowid
         
         default_habits = [
@@ -126,9 +128,6 @@ def register_user(username, password, email=""):
             (user_id, "Deep Work Software Sprint", "Deep work", "High 🔥", "Completed", 90)
         ]
         c.executemany("INSERT INTO tasks (user_id, title, category, priority, status, time_spent_mins) VALUES (?,?,?,?,?,?)", default_tasks)
-
-        c.execute("INSERT INTO activity_logs (user_id, activity_type, description) VALUES (?, ?, ?)", 
-                  (user_id, "AUTH", "Account created successfully"))
 
         conn.commit()
         return True
@@ -150,10 +149,22 @@ def authenticate_user(username, password):
 def get_user_profile(user_id):
     conn = get_connection()
     c = conn.cursor()
-    c.execute("SELECT username, email, timezone, sports_preference, weekly_goal_hours, created_at FROM users WHERE id = ?", (user_id,))
+    c.execute("SELECT username, email, timezone, sports_preference, weekly_goal_hours, created_at, xp, level, freeze_tokens FROM users WHERE id = ?", (user_id,))
     row = c.fetchone()
     conn.close()
     return row
+
+def add_user_xp(user_id, xp_gained):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT xp, level FROM users WHERE id = ?", (user_id,))
+    row = c.fetchone()
+    if row:
+        new_xp = row[0] + xp_gained
+        new_level = (new_xp // 200) + 1
+        c.execute("UPDATE users SET xp = ?, level = ? WHERE id = ?", (new_xp, new_level, user_id))
+        conn.commit()
+    conn.close()
 
 def update_user_profile(user_id, email, timezone, sports_pref, goal_hours):
     conn = get_connection()

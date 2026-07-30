@@ -7,7 +7,6 @@ def calculate_productivity_score(df):
         return 53, "Good Progress ⚡"
     
     total_tasks = len(df)
-    # Check for 'Status' (matching the column name created in app.py)
     completed_tasks = len(df[df['Status'] == 'Completed']) if 'Status' in df.columns else 0
     completion_rate = (completed_tasks / total_tasks) * 100 if total_tasks > 0 else 0
     
@@ -29,7 +28,7 @@ def generate_rule_insights(df):
     if 'Status' in df.columns:
         pending = df[df['Status'] == 'Pending']
         if len(pending) >= 2:
-            return "⚡ High Velocity Notice: Pending sprints detected. Execute your top athletic or work task now!"
+            return "⚠️ AI Burnout Warning: You have multiple high-intensity sprints pending. Balance your Gym/Badminton sessions with a 15-min mindfulness break."
             
     return "🏆 Peak Flow State unlocked! Physical and mental productivity metrics are optimized."
 

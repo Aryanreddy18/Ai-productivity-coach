@@ -55,6 +55,39 @@ def apply_neon_theme():
         border-color: rgba(16, 185, 129, 0.3) !important;
     }
 
+    /* XP & Level Bar Styling */
+    .xp-bar-bg {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        height: 14px;
+        width: 100%;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .xp-bar-fill {
+        background: linear-gradient(90deg, #10b981, #38bdf8, #a855f7);
+        height: 100%;
+        border-radius: 12px;
+        transition: width 0.8s ease-in-out;
+    }
+
+    /* Trophy Badge Cards */
+    .trophy-card {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 16px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .trophy-card:hover {
+        border-color: #eab308;
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px -5px rgba(234, 179, 8, 0.3);
+    }
+
     /* Expandable Sport Cards */
     .expandable-sport-card {
         background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.6));
@@ -80,6 +113,16 @@ def apply_neon_theme():
         padding: 24px;
         box-shadow: 0 20px 45px -10px rgba(16, 185, 129, 0.35);
         transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Cyberpunk Focus Overlay Card */
+    .cyber-focus-card {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(10, 15, 30, 0.98));
+        border: 2px solid #38bdf8;
+        border-radius: 24px;
+        padding: 32px;
+        text-align: center;
+        box-shadow: 0 0 50px rgba(56, 189, 248, 0.3);
     }
 
     /* Primary Action Buttons */
