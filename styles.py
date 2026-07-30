@@ -91,6 +91,40 @@ def apply_neon_theme():
         transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
+    /* WILD ANIMATED STREAK CARDS */
+    @keyframes flamePulse {
+        0% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 12px #f97316); }
+        50% { transform: scale(1.12) rotate(3deg); filter: drop-shadow(0 0 24px #ff0055); }
+        100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 12px #f97316); }
+    }
+
+    @keyframes streakGlow {
+        0% { border-color: rgba(249, 115, 22, 0.4); box-shadow: 0 0 20px rgba(249, 115, 22, 0.2); }
+        50% { border-color: rgba(255, 0, 85, 0.8); box-shadow: 0 0 35px rgba(255, 0, 85, 0.4); }
+        100% { border-color: rgba(249, 115, 22, 0.4); box-shadow: 0 0 20px rgba(249, 115, 22, 0.2); }
+    }
+
+    .wild-streak-box {
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(255, 0, 85, 0.15));
+        border: 2px solid #f97316;
+        border-radius: 18px;
+        padding: 16px;
+        text-align: center;
+        animation: streakGlow 3s infinite ease-in-out;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .wild-streak-box:hover {
+        transform: translateY(-5px) scale(1.03);
+    }
+
+    .flame-icon-animated {
+        display: inline-block;
+        font-size: 32px;
+        animation: flamePulse 1.5s infinite ease-in-out;
+    }
+
     /* Trophy Badge Cards */
     .trophy-card {
         background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));

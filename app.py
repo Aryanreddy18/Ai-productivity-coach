@@ -214,19 +214,34 @@ if menu == "Dashboard":
             st.markdown(f"<span style='font-size:16px; font-weight:800;'>Tasks Completed</span> <span style='float:right; color:#00f3ff; font-size:20px; font-weight:900;'>{completed_tasks_count}/{max(1, total_tasks_count)}</span>", unsafe_allow_html=True)
             st.progress(completed_tasks_count / max(1, total_tasks_count))
 
+            # WILD ANIMATED STREAKS (CURRENT & BEST STREAK)
             st.markdown("<br>", unsafe_allow_html=True)
             s1, s2 = st.columns(2)
-            s1.metric("🔥 Current Streak", "4 Days")
-            s2.metric("🏆 Best Streak", "7 Days")
+            with s1:
+                st.markdown("""
+                <div class="wild-streak-box">
+                    <span class="flame-icon-animated">🔥</span>
+                    <div style="font-size:11px; color:#f97316; font-weight:900; letter-spacing:1px; margin-top:2px;">CURRENT STREAK</div>
+                    <div style="font-size:28px; font-weight:900; color:#ffffff; line-height:1.1;">4 DAYS</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with s2:
+                st.markdown("""
+                <div class="wild-streak-box" style="border-color:#ff0055; background:linear-gradient(135deg, rgba(255,0,85,0.2), rgba(168,85,247,0.2));">
+                    <span class="flame-icon-animated" style="animation-delay: 0.7s;">⚡</span>
+                    <div style="font-size:11px; color:#ff0055; font-weight:900; letter-spacing:1px; margin-top:2px;">BEST STREAK RECORD</div>
+                    <div style="font-size:28px; font-weight:900; color:#ffffff; line-height:1.1;">7 DAYS</div>
+                </div>
+                """, unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # WEARABLE APPLE WATCH / FITBIT BIO-SYNC CARD
+        # WEARABLE APPLE WATCH / FITBIT BIO-SYNC & BLUETOOTH / WI-FI SCANNER
         st.markdown("""
         <div class="hd-card" style="border-left: 6px solid #a855f7;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="font-size:18px; font-weight:900; color:#ffffff;">⌚ Smart Wearable & Strava Biometric Telemetry</div>
-                <span style="color:#10b981; font-size:12px; font-weight:800; filter:drop-shadow(0 0 6px #10b981);">● LIVE SYNCED</span>
+                <div style="font-size:18px; font-weight:900; color:#ffffff;">⌚ Bluetooth BLE & Wi-Fi Wearable Live Telemetry</div>
+                <span style="color:#10b981; font-size:12px; font-weight:800; filter:drop-shadow(0 0 6px #10b981);">● ACTIVE PAIRING</span>
             </div>
             <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-top:14px; text-align:center;">
                 <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,0.06); transition:transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
@@ -242,8 +257,32 @@ if menu == "Dashboard":
                     <div style="font-size:22px; font-weight:900; color:#10b981;">620 kcal</div>
                 </div>
             </div>
-        </div>
         """, unsafe_allow_html=True)
+        
+        # WEARABLE BLUETOOTH / WI-FI PAIRING SCANNER COMPONENT
+        st.components.v1.html("""
+        <div style="margin-top:10px; font-family:sans-serif; text-align:center;">
+            <button id="bleBtn" style="background: linear-gradient(135deg, #00f3ff, #a855f7); color:#000; font-weight:900; padding:8px 16px; border:none; border-radius:10px; cursor:pointer; font-size:12px; box-shadow:0 0 10px rgba(0,243,255,0.4);">
+                📶 Connect Bluetooth Wearable (BLE / Wi-Fi)
+            </button>
+            <div id="statusTxt" style="color:#00f3ff; font-size:11px; margin-top:6px; font-weight:bold;">Status: Ready to pair Apple Watch, Garmin, Polar, or BLE Straps</div>
+        </div>
+        <script>
+            document.getElementById('bleBtn').addEventListener('click', async () => {
+                const statusDiv = document.getElementById('statusTxt');
+                try {
+                    statusDiv.innerText = 'Searching for nearby Bluetooth / Wi-Fi Fitness devices...';
+                    const device = await navigator.bluetooth.requestDevice({
+                        filters: [{ services: ['heart_rate'] }]
+                    });
+                    statusDiv.innerText = 'Connected to: ' + device.name;
+                } catch (err) {
+                    statusDiv.innerText = 'Pairing simulated/ready: ' + err.message;
+                }
+            });
+        </script>
+        """, height=65)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col_side:
         st.markdown("""
