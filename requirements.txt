@@ -3,6 +3,3 @@ pandas
 plotly
 openai
 streamlit-mic-recorder
-fpdf2
-elevenlabs
-psycopg2-binary
